@@ -1,20 +1,71 @@
 import React from 'react';
 import axios from 'axios';
-
-import FullCalendar from '@fullcalendar/react'
-import dayGridPlugin from '@fullcalendar/daygrid'
+import moment from 'moment';
 
 
-export default class Calendar extends React.Component{
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
+import rrulePlugin from '@fullcalendar/rrule';
+
+
+
+
+
+export default class MyCalendar extends React.Component{
     constructor(props){
         super(props);
-        let events = [];
-        this.loadData();
+        this.state = {events : []};
+        this.loadData = this.loadData.bind(this);
+
+        this.calendarRef = React.createRef();
     }
 
+    componentDidMount(){
+
+
+        let ev = this.state.events;
+        ev.push({date:"2019-06-20",title:"Hola"});
+        this.setState({events:ev});
+
+        this.loadData();
+
+    }
+
+
+
     loadData(){
+        let self = this;
+
         axios.get("/data").then(function(resp){
-            console.log(resp.data);
+
+            resp.data.events.forEach(function(ev){
+
+                let startDate = moment(ev.start,'DD/MM/YYYY');
+                let endDate = moment(ev.end,'DD/MM/YYYY');
+
+
+                let event = {title:ev.description};
+                if(ev.repeat === 'yearly'){
+                    event.rrule = {
+                        dtstart:startDate.format("YYYY-MM-DD"),
+                        freq:"yearly",
+                        until: endDate.add('year',100).format("YYYY-MM-DD")
+                    };
+
+                    event.allDay = true;
+
+                }
+
+                let events = self.state.events;
+                events.push(event);
+
+
+
+                self.setState({events:events});
+
+                self.setState({calendar:<FullCalendar ref={self.calendarRef} defaultView="dayGridMonth" plugins={[ dayGridPlugin,interactionPlugin,rrulePlugin ]} dateClick={self.handleDateClick} events={self.state.events}/>})
+            });
 
         });
     }
@@ -24,9 +75,12 @@ export default class Calendar extends React.Component{
     };
 
     render(){
+        console.log(this.state.events);
+        let self = this;
         return(
-
-            <FullCalendar defaultView="dayGridMonth" plugins={[ dayGridPlugin ]} dateClick={this.handleDateClick} editable= {true}/>
+            <div>
+            {self.state.calendar}
+            </div>
         )
     }
 
