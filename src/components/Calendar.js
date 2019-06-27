@@ -7,10 +7,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import rrulePlugin from '@fullcalendar/rrule';
-
-
-
-
+import {toDuration} from "@fullcalendar/moment";
 
 export default class MyCalendar extends React.Component{
     constructor(props){
@@ -25,7 +22,7 @@ export default class MyCalendar extends React.Component{
 
 
         let ev = this.state.events;
-        ev.push({date:"2019-06-20",title:"Hola"});
+        ev.push({date:"2019-06-20 13:00",title:"Hola",allDay:"false",duration:'00:30'});
         this.setState({events:ev});
 
         this.loadData();
@@ -43,17 +40,27 @@ export default class MyCalendar extends React.Component{
 
                 let startDate = moment(ev.start,'DD/MM/YYYY');
                 let endDate = moment(ev.end,'DD/MM/YYYY');
-
+                let allDay = ev.allDay;
+                let duration = ev.duration;
+                debugger;
 
                 let event = {title:ev.description};
-                if(ev.repeat === 'yearly'){
+                if(ev.repeat){
                     event.rrule = {
-                        dtstart:startDate.format("YYYY-MM-DD"),
-                        freq:"yearly",
-                        until: endDate.add('year',100).format("YYYY-MM-DD")
+                        dtstart:startDate.format("YYYY-MM-DD hh:mm"),
+                        freq:ev.repeat,
+                        until: endDate.format("YYYY-MM-DD hh:mm"),
+
                     };
 
-                    event.allDay = true;
+                    event.allDay = allDay;
+                    if(!allDay){
+                        if(duration) {
+                            event.duration = duration;
+                        }else{
+                            event.duration = '00:30';
+                        }
+                    }
 
                 }
 
@@ -64,14 +71,18 @@ export default class MyCalendar extends React.Component{
 
                 self.setState({events:events});
 
-                self.setState({calendar:<FullCalendar ref={self.calendarRef} defaultView="dayGridMonth" plugins={[ dayGridPlugin,interactionPlugin,rrulePlugin ]} dateClick={self.handleDateClick} events={self.state.events}/>})
+                self.setState({calendar:<FullCalendar ref={self.calendarRef} defaultView="dayGridMonth" plugins={[ dayGridPlugin,interactionPlugin,rrulePlugin ]} dateClick={self.handleDateClick} eventClick={self.handleEventClick} events={self.state.events}/>})
             });
 
         });
     }
 
     handleDateClick = (arg) => { // bind with an arrow function
-        alert(arg.dateStr)
+        console.log(arg)
+    };
+
+    handleEventClick = (arg) => { // bind with an arrow function
+        console.log(arg)
     };
 
     render(){
